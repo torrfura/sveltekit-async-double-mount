@@ -1,0 +1,20 @@
+{
+  "name": "sveltekit-async-double-mount",
+  "description": "Minimal repro: destination +page double-mounts under SvelteKit experimental.async",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "svelte-kit sync"
+  },
+  "devDependencies": {
+    "@sveltejs/kit": "3.0.0-next.4",
+    "@sveltejs/vite-plugin-svelte": "7.1.2",
+    "svelte": "5.56.3",
+    "typescript": "6.0.3",
+    "vite": "8.0.16"
+  }
+}
