@@ -1,22 +1,31 @@
-// Shared debug stats. `byRoute` counts navigations that land on a route
-// (visits); `byNode` counts component onMounts. When a node's mounts exceed its
-// visits, it mounted more than once per visit — that's the bug.
-export const stats = $state({
-  clicks: 0, // navigations after the initial load
-  navs: 0, // all navigations incl. the initial load
-  mounts: 0, // total component onMounts
-  byNode: {} as Record<string, number>, // node label -> onMount count
-  byRoute: {} as Record<string, number> // route path -> visit count
+// Per-NAVIGATION mount log. Cleared at the start of every navigation (see
+// `beforeNavigate` in +layout.svelte), so the panel always shows ONLY what
+// mounted during the LAST navigation — never an accumulation across clicks.
+// A label with count > 1 here mounted more than once in ONE navigation = the bug.
+export const lastNav = $state<{ from: string; to: string; mounts: Record<string, number> }>({
+  from: '',
+  to: '(initial load)',
+  mounts: {}
 });
 
-export function recordMount(name: string) {
-  stats.byNode[name] = (stats.byNode[name] ?? 0) + 1;
-  stats.mounts += 1;
-  console.log(`[repro] onMount: ${name} (#${stats.byNode[name]})`);
+// The persistent host's mount count — proves it mounts ONCE and survives every
+// navigation (this stays 1 no matter how much you click).
+export const host = $state<{ mounts: number }>({ mounts: 0 });
+
+export function startNavigation(from: string, to: string) {
+  lastNav.from = from;
+  lastNav.to = to;
+  lastNav.mounts = {};
 }
 
-export function recordNav(path: string, initial: boolean) {
-  stats.navs += 1;
-  stats.byRoute[path] = (stats.byRoute[path] ?? 0) + 1;
-  if (!initial) stats.clicks += 1;
+/** Called from every route component's `onMount`. */
+export function track(label: string) {
+  const n = (lastNav.mounts[label] = (lastNav.mounts[label] ?? 0) + 1);
+  if (n > 1) console.warn(`🐛 DOUBLE MOUNT: ${label} mounted ${n}× in one navigation → ${lastNav.to}`);
+  else console.log(`[mount] ${label} → ${lastNav.to}`);
+}
+
+/** Called from the persistent host's `onMount` only. */
+export function trackHost() {
+  host.mounts += 1;
 }
