@@ -5,7 +5,7 @@
   // Control — outgoing route WITHOUT teleport: renders the child route inline.
   let { children } = $props();
 
-  onMount(() => recordMount('d/+layout (renders child inline)'));
+  onMount(() => recordMount('d/+layout'));
 </script>
 
 <div>{@render children()}</div>

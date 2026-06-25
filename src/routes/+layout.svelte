@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { afterNavigate } from '$app/navigation';
   import { onMount, setContext } from 'svelte';
   import type { Snippet } from 'svelte';
-  import { mounts, recordMount } from './mounts.svelte';
+  import { recordMount, recordNav, stats } from './mounts.svelte';
 
   // Ingredient #1 — the persistent "teleport root". Holds a snippet registry in
   // context, renders {@render children()} (where panes register), and renders
-  // the registered "side" snippet ELSEWHERE in its own tree. It survives every
+  // the registered "side" snippet ELSEWHERE in its own tree. Survives every
   // navigation below, so it keeps rendering the registered snippet across them.
   const slots = $state<{ side?: Snippet }>({});
   setContext('repro', slots);
@@ -13,24 +14,48 @@
   let { children } = $props();
   const side = $derived(slots.side);
 
-  onMount(() => recordMount('+layout (root, persistent)'));
+  afterNavigate((nav) => recordNav(nav.to?.url.pathname ?? '?', nav.type === 'enter'));
+  onMount(() => recordMount('root +layout'));
+
+  // Component tree (indent = nesting). `visits` = navigations to that route;
+  // `mounts` = onMount count. mounts > visits ⇒ mounted more than once per visit.
+  type Node = { label: string; depth: number; route: string | null };
+  const tree: Node[] = [
+    { label: 'root +layout', depth: 0, route: null },
+    { label: 'index +page', depth: 1, route: '/' },
+    { label: 'a/+layout', depth: 1, route: '/a' },
+    { label: 'pane', depth: 2, route: '/a' },
+    { label: 'a/+page', depth: 3, route: '/a' },
+    { label: 'b/+layout', depth: 1, route: '/b' },
+    { label: 'b/+page', depth: 2, route: '/b' },
+    { label: 'c/+page', depth: 1, route: '/c' },
+    { label: 'd/+layout', depth: 1, route: '/d' },
+    { label: 'd/+page', depth: 2, route: '/d' }
+  ];
+
+  const treeText = $derived(
+    tree
+      .map((n) => {
+        const name = `${'  '.repeat(n.depth)}${n.label}`;
+        const visits = n.route === null ? stats.navs : (stats.byRoute[n.route] ?? 0);
+        const mounts = stats.byNode[n.label] ?? 0;
+        const flag = mounts > visits && visits > 0 ? '   <-- mounted twice per visit' : '';
+        return `${name.padEnd(22)}visits: ${visits}   mounts: ${mounts}${flag}`;
+      })
+      .join('\n')
+  );
 </script>
 
 <nav>
-  <a href="/a">/a teleport-outgoing</a>
-  <a href="/b">/b 2-level dest</a>
-  <a href="/c">/c 1-level dest</a>
-  <a href="/d">/d no-teleport outgoing</a>
+  <a href="/a">/a</a>
+  <a href="/b">/b</a>
+  <a href="/c">/c</a>
+  <a href="/d">/d</a>
 </nav>
 
-<!-- onMount tally (every layout + page is instrumented; reset on full reload) -->
-<table>
-  <tbody>
-    {#each Object.entries(mounts) as [name, n] (name)}
-      <tr><td>{name}</td><td><strong>{n}</strong></td></tr>
-    {/each}
-  </tbody>
-</table>
+<strong>clicks: {stats.clicks} | mounts: {stats.mounts}</strong>
+
+<pre>{treeText}</pre>
 
 <hr />
 

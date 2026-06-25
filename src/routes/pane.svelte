@@ -22,5 +22,5 @@
     };
   });
 
-  onMount(() => recordMount('pane (registers slot, renders nothing)'));
+  onMount(() => recordMount('pane'));
 </script>

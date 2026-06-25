@@ -7,7 +7,7 @@
   // ({@render children()}) through the persistent root's side slot.
   let { children } = $props();
 
-  onMount(() => recordMount('a/+layout (teleports child route)'));
+  onMount(() => recordMount('a/+layout'));
 </script>
 
 <Pane>{@render children()}</Pane>

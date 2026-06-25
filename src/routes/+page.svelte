@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { recordMount } from './mounts.svelte';
 
-  onMount(() => recordMount('+page (index /)'));
+  onMount(() => recordMount('index +page'));
 </script>
 
 <h1>SvelteKit <code>experimental.async</code> — destination <code>+page</code> double-mounts</h1>
