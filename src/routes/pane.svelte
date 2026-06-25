@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { getContext, untrack } from 'svelte';
+  import { getContext, onMount, untrack } from 'svelte';
   import type { Snippet } from 'svelte';
+  import { recordMount } from './mounts.svelte';
 
   // A "teleporting pane": registers its `children` snippet into the shared
   // context store and renders NOTHING itself. The root +layout renders the
@@ -20,4 +21,6 @@
       slots.side = undefined;
     };
   });
+
+  onMount(() => recordMount('pane (registers slot, renders nothing)'));
 </script>

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { setContext } from 'svelte';
+  import { onMount, setContext } from 'svelte';
   import type { Snippet } from 'svelte';
-  import { counter } from './counter.svelte';
+  import { mounts, recordMount } from './mounts.svelte';
 
   // Ingredient #1 — the persistent "teleport root". Holds a snippet registry in
   // context, renders {@render children()} (where panes register), and renders
@@ -12,6 +12,8 @@
 
   let { children } = $props();
   const side = $derived(slots.side);
+
+  onMount(() => recordMount('+layout (root, persistent)'));
 </script>
 
 <nav>
@@ -19,8 +21,16 @@
   <a href="/b">/b 2-level dest</a>
   <a href="/c">/c 1-level dest</a>
   <a href="/d">/d no-teleport outgoing</a>
-  <strong>total dest +page mounts: {counter.destMounts}</strong>
 </nav>
+
+<!-- onMount tally (every layout + page is instrumented; reset on full reload) -->
+<table>
+  <tbody>
+    {#each Object.entries(mounts) as [name, n] (name)}
+      <tr><td>{name}</td><td><strong>{n}</strong></td></tr>
+    {/each}
+  </tbody>
+</table>
 
 <hr />
 
