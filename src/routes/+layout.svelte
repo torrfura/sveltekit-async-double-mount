@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { beforeNavigate } from '$app/navigation';
+  import { beforeNavigate, onNavigate } from '$app/navigation';
   import { onMount, setContext, type Snippet } from 'svelte';
   import { host, lastNav, startNavigation, trackHost } from './mounts.svelte';
 
@@ -16,6 +16,14 @@
   // ever shows the components that mounted during the latest navigation.
   beforeNavigate((n) => startNavigation(n.from?.url.pathname ?? '', n.to?.url.pathname ?? '?'));
 
+  // EXP3: clear the teleport slot at nav-START — before the async scheduler
+  // instantiates the destination +page. Removes the leaving teleport's render
+  // ahead of the swap (→ single mount). A SURVIVING teleport re-asserts itself
+  // via its own per-navigation $effect (see teleport.svelte).
+  onNavigate(() => {
+    slot.teleported = undefined;
+  });
+
   // The host itself mounts once and never again — that's the persistence.
   onMount(trackHost);
 
@@ -28,6 +36,8 @@
   <a href="/nested">/nested</a>
   <a href="/flat">/flat</a>
   <a href="/inline">/inline</a>
+  <a href="/keep/a">/keep/a</a>
+  <a href="/keep/b">/keep/b</a>
 </nav>
 
 <p class="host">Persistent host mounted <strong>{host.mounts}×</strong> total — it survives every navigation (stays 1).</p>

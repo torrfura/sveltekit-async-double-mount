@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getContext, untrack, type Snippet } from 'svelte';
+  import { page } from '$app/state';
 
   // A portal: registers its `children` snippet into the persistent host's slot
   // and renders NOTHING itself. The host renders the snippet elsewhere in its
@@ -12,8 +13,13 @@
     slot.teleported = children;
   });
 
-  // Keep it fresh on prop changes; clear it on unmount.
+  // EXP3 — persist-safe re-assert. The host clears the slot at nav-START (see
+  // its onNavigate), which kills the LEAVING teleport's render before the
+  // destination mounts (→ single mount). This effect reads `page.url` so it
+  // re-runs on EVERY navigation: a SURVIVING teleport re-asserts its snippet
+  // after the host cleared it; a LEAVING teleport unmounts and never re-runs.
   $effect(() => {
+    void page.url; // dependency: re-run this effect on every navigation
     slot.teleported = children;
     return () => {
       slot.teleported = undefined;
